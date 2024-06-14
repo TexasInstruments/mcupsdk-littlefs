@@ -286,7 +286,7 @@ struct lfs_config {
 #ifdef LFS_MULTIVERSION
     // On-disk version to use when writing in the form of 16-bit major version
     // + 16-bit minor version. This limiting metadata to what is supported by
-    // older minor versions. Note that some features will be lost. Defaults to 
+    // older minor versions. Note that some features will be lost. Defaults to
     // to the most recent minor version when zero.
     uint32_t disk_version;
 #endif
@@ -396,6 +396,10 @@ typedef struct lfs_dir {
     lfs_block_t head[2];
 } lfs_dir_t;
 
+struct lfs_ctz {
+    lfs_block_t head;
+    lfs_size_t size;
+};
 // littlefs file type
 typedef struct lfs_file {
     struct lfs_file *next;
@@ -403,10 +407,7 @@ typedef struct lfs_file {
     uint8_t type;
     lfs_mdir_t m;
 
-    struct lfs_ctz {
-        lfs_block_t head;
-        lfs_size_t size;
-    } ctz;
+    struct lfs_ctz ctz;
 
     uint32_t flags;
     lfs_off_t pos;
@@ -431,31 +432,35 @@ typedef struct lfs_gstate {
     lfs_block_t pair[2];
 } lfs_gstate_t;
 
+struct lfs_mlist {
+    struct lfs_mlist *next;
+    uint16_t id;
+    uint8_t type;
+    lfs_mdir_t m;
+};
+
+struct lfs_lookahead {
+    lfs_block_t start;
+    lfs_block_t size;
+    lfs_block_t next;
+    lfs_block_t ckpoint;
+    uint8_t *buffer;
+};
+
 // The littlefs filesystem type
 typedef struct lfs {
     lfs_cache_t rcache;
     lfs_cache_t pcache;
 
     lfs_block_t root[2];
-    struct lfs_mlist {
-        struct lfs_mlist *next;
-        uint16_t id;
-        uint8_t type;
-        lfs_mdir_t m;
-    } *mlist;
+    struct lfs_mlist *mlist;
     uint32_t seed;
 
     lfs_gstate_t gstate;
     lfs_gstate_t gdisk;
     lfs_gstate_t gdelta;
 
-    struct lfs_lookahead {
-        lfs_block_t start;
-        lfs_block_t size;
-        lfs_block_t next;
-        lfs_block_t ckpoint;
-        uint8_t *buffer;
-    } lookahead;
+    struct lfs_lookahead lookahead;
 
     const struct lfs_config *cfg;
     lfs_size_t block_count;
